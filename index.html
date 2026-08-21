@@ -75,14 +75,14 @@
       prices of gasoline and diesel to provide a representative view of the market over time.</p>
     <h3>The code behind this</h3>
     <p>The code is available on
-      <a href="https://github.com/yourusername/italy-fuel-price-history" target="_blank">GitHub</a>.
+      <a href="https://github.com/marco97pa/italy_fuel_price_history/" target="_blank">GitHub</a>.
       You can also find the full CSV data of prices there. All data is open and available for use.</p>
     <h3>Where does this code run?</h3>
     <p>The code runs on a daily basis to fetch the latest fuel price data on GitHub Actions.
-      It runs automatically at 10:00 AM (CET) when new data is available.</p>
+      It runs automatically at 10:00 AM (UTC) when new data is available.</p>
       <div style="text-align:center; margin-bottom:10px;">
-        <a href="https://github.com/OWNER/REPO/actions/workflows/fuel-prices.yml" target="_blank">
-            <img src="https://github.com/OWNER/REPO/actions/workflows/fuel-prices.yml/badge.svg?branch=main"
+        <a href="https://github.com/marco97pa/italy_fuel_price_history/actions/workflows/fuel-prices.yml" target="_blank">
+            <img src="https://github.com/marco97pa/italy_fuel_price_history/actions/workflows/fuel-prices.yml/badge.svg?branch=main"
                 alt="Fuel prices workflow status">
         </a>
     </div>
@@ -100,7 +100,7 @@
     let chart = null;      // instance of Chart.js
 
     async function loadCsvData() {
-      const response = await fetch(CSV_URL);
+      const response = await fetch(CSV_URL, { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('Error loading CSV: ' + response.status);
       }
