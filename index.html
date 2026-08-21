@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Italy Fuel Prices History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+    }
+    #chart-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    canvas {
+      max-width: 100%;
+    }
+    #status {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #555;
+      font-size: 0.9rem;
+    }
+    #range-controls {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    #range-controls button {
+      margin: 0 5px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #eee;
+      cursor: pointer;
+    }
+    #range-controls button.active {
+      background: #0070f3;
+      color: #fff;
+      border-color: #0053b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Italy Fuel Prices History</h1>
+
+  <div id="chart-container">
+    <div id="status">Loading data from CSV…</div>
+
+    <div id="range-controls">
+      <button id="btn-last30" class="active">Last 30 days</button>
+      <button id="btn-full">Full range</button>
+    </div>
+
+    <canvas id="fuelChart"></canvas>
+  </div>
+
+  <div id="bts">
+    <h2>How we collect the data</h2>
+    <p>The data is collected daily by getting information from the official
+      <a href="https://www.mimit.gov.it/it/prezzo-medio-carburanti" target="_blank">MIMIT website</a>
+      that gathers data from all fuel stations across Italy and then we process averages of <b>self service</b>
+      prices of gasoline and diesel to provide a representative view of the market over time.</p>
+    <h3>The code behind this</h3>
+    <p>The code is available on
+      <a href="https://github.com/yourusername/italy-fuel-price-history" target="_blank">GitHub</a>.
+      You can also find the full CSV data of prices there. All data is open and available for use.</p>
+    <h3>Where does this code run?</h3>
+    <p>The code runs on a daily basis to fetch the latest fuel price data on GitHub Actions.
+      It runs automatically at 10:00 AM (CET) when new data is available.</p>
+      <div style="text-align:center; margin-bottom:10px;">
+        <a href="https://github.com/OWNER/REPO/actions/workflows/fuel-prices.yml" target="_blank">
+            <img src="https://github.com/OWNER/REPO/actions/workflows/fuel-prices.yml/badge.svg?branch=main"
+                alt="Fuel prices workflow status">
+        </a>
+    </div>
+  </div>
+
+  <div id="copyright" style="text-align:center; margin-top:20px; font-size:0.9rem; color:#555;">
+    <p>Developed by Marco Fantauzzo</p>
+  </div>
+
+  <script>
+    // CSV file path
+    const CSV_URL = 'average_prices.csv';
+
+    let fullData = null;   // all data from CSV
+    let chart = null;      // instance of Chart.js
+
+    async function loadCsvData() {
+      const response = await fetch(CSV_URL);
+      if (!response.ok) {
+        throw new Error('Error loading CSV: ' + response.status);
+      }
+      const text = await response.text();
+      return parseCsv(text);
+    }
+
+    // CSV format: YYYY-MM-DD,gasoline,diesel
+    function parseCsv(text) {
+      const lines = text.trim().split('\n');
+
+      const dates = [];
+      const gasolinePrices = [];
+      const dieselPrices = [];
+
+      for (const line of lines) {
+        const parts = line.split(',');
+        if (parts.length < 3) continue;
+
+        const dateStr = parts[0].trim();
+        const gasolineStr = parts[1].trim();
+        const dieselStr = parts[2].trim();
+
+        // Skip header line if present
+        if (dateStr === 'date') continue;
+
+        dates.push(dateStr);
+        gasolinePrices.push(parseFloat(gasolineStr));
+        dieselPrices.push(parseFloat(dieselStr));
+      }
+
+      return { dates, gasolinePrices, dieselPrices };
+    }
+
+    function renderChart(sliceData) {
+      const ctx = document.getElementById('fuelChart').getContext('2d');
+
+      if (!chart) {
+        // Build the new chart for the first time
+        chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: sliceData.dates,
+            datasets: [
+              {
+                label: 'Benzina (€/L)',
+                data: sliceData.gasolinePrices,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.2,
+              },
+              {
+                label: 'Gasolio (€/L)',
+                data: sliceData.dieselPrices,
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.2,
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'top',
+              },
+              title: {
+                display: true,
+                text: 'Trend of Average Fuel Prices'
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Date'
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Average Price (€/L)'
+                },
+                beginAtZero: false
+              }
+            }
+          }
+        });
+      } else {
+        // Update the existing chart with a new range
+        chart.data.labels = sliceData.dates;
+        chart.data.datasets[0].data = sliceData.gasolinePrices;
+        chart.data.datasets[1].data = sliceData.dieselPrices;
+        chart.update();
+      }
+    }
+
+    function getLastNDaysData(n) {
+      if (!fullData) return null;
+      const total = fullData.dates.length;
+      const start = Math.max(0, total - n);
+
+      return {
+        dates: fullData.dates.slice(start),
+        gasolinePrices: fullData.gasolinePrices.slice(start),
+        dieselPrices: fullData.dieselPrices.slice(start),
+      };
+    }
+
+    function setActiveButton(activeId) {
+      const btnLast30 = document.getElementById('btn-last30');
+      const btnFull = document.getElementById('btn-full');
+
+      btnLast30.classList.toggle('active', activeId === 'btn-last30');
+      btnFull.classList.toggle('active', activeId === 'btn-full');
+    }
+
+    async function init() {
+      const statusEl = document.getElementById('status');
+      const btnLast30 = document.getElementById('btn-last30');
+      const btnFull = document.getElementById('btn-full');
+
+      try {
+        fullData = await loadCsvData();
+        if (fullData.dates.length === 0) {
+          statusEl.textContent = 'No data in CSV.';
+          return;
+        }
+
+        statusEl.textContent = '';
+
+        // Default view: last 30 days (or full if less than 30 records)
+        const initialData = getLastNDaysData(30) || fullData;
+        renderChart(initialData);
+
+        // Event listeners for buttons
+        btnLast30.addEventListener('click', () => {
+          const last30 = getLastNDaysData(30) || fullData;
+          renderChart(last30);
+          setActiveButton('btn-last30');
+        });
+
+        btnFull.addEventListener('click', () => {
+          renderChart(fullData);
+          setActiveButton('btn-full');
+        });
+
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Error loading CSV.';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

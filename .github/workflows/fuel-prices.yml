@@ -1,0 +1,44 @@
+name: Daily fuel prices scrape
+
+on:
+  schedule:
+    # Every day at 10:00 AM UTC (12:00 PM in Italy)
+    - cron: "0 10 * * *"
+  # Optionally, you can also trigger this workflow manually from the GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  scrape-and-commit:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      # Checkout of the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Python setup
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Install dependencies 
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+        if: hashFiles('requirements.txt') != ''
+
+      # Execute the fuel price scraper script
+      - name: Run fuel price scraper
+        run: |
+          python main.py
+
+      # Commit and push changes if the CSV file has been updated
+      - name: Commit CSV changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "chore: update average fuel prices (daily)"
+          file_pattern: "average_prices.csv"
