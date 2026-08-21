@@ -18,12 +18,26 @@
       text-align: center;
     }
     #chart-container {
-      max-width: 1280px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        max-width: 1280px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        /* optional: a reasonable desktop height */
+        height: 50vh;
+        }
+
+    /* mobile: chart container = 70% of viewport height */
+    @media (max-width: 768px) {
+        #chart-container {
+            height: 70vh;
+        }
+
+        /* canvas fills the container */
+        #fuelChart {
+            height: 100% !important;
+        }
     }
     canvas {
       max-width: 100%;
@@ -163,6 +177,7 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: {
                 position: 'top',
