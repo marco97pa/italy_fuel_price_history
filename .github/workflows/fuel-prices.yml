@@ -1,9 +1,10 @@
 name: Daily fuel prices scrape
 
 on:
-  schedule:
+  # DISABLED ON 20/10/2026 since MIMIT is blocking Github requests
+  # schedule:
     # Every day at 10:00 AM UTC (12:00 PM in Italy)
-    - cron: "0 10 * * *"
+  #  - cron: "0 10 * * *"
   # Optionally, you can also trigger this workflow manually from the GitHub Actions tab
   workflow_dispatch:
 

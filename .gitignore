@@ -172,3 +172,4 @@ pyrightconfig.json
 
 # Custom
 load_history.py
+local_update.bat
