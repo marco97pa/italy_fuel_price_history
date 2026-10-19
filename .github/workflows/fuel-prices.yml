@@ -31,6 +31,27 @@ jobs:
           pip install -r requirements.txt
         if: hashFiles('requirements.txt') != ''
 
+        
+      - name: Diagnose MIMIT connectivity
+        run: |
+          echo "=== DNS resolution ==="
+          getent ahosts www.mimit.gov.it || true
+
+          echo "=== HTTPS over IPv4 ==="
+          curl -4 -sS -o /dev/null \
+            --connect-timeout 10 --max-time 20 \
+            -w "HTTP %{http_code}; IP %{remote_ip}; time %{time_total}s\n" \
+            https://www.mimit.gov.it/it/prezzo-medio-carburanti/regioni \
+            || true
+
+          echo "=== HTTPS over IPv6 ==="
+          curl -6 -sS -o /dev/null \
+            --connect-timeout 10 --max-time 20 \
+            -w "HTTP %{http_code}; IP %{remote_ip}; time %{time_total}s\n" \
+            https://www.mimit.gov.it/it/prezzo-medio-carburanti/regioni \
+            || true
+
+
       # Execute the fuel price scraper script
       - name: Run fuel price scraper
         run: |
